@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Notes in Web</title>
+<title>MIDI Chord Display</title>
 <style>
 @font-face {
   font-family: 'PT Sans Bold Embedded';
@@ -155,6 +155,10 @@
     font-size: 14px;
     color: #ddd;
   }
+  #accidentalsBox label span {
+    position: relative;
+    top: 8px;
+  }
 
   /* Панель тоники/лада — единственный выбор в каждой группе (как радио-кнопки) */
   #scalePanel .groupTitle {
@@ -267,7 +271,7 @@
     <label>MIDI выход (напр. loopMIDI):</label>
     <select id="outputSelect"><option>—</option></select>
   </div>
-  <div class="row" id="statusLine" style="color:#e6e6e6;">Ожидание доступа к MIDI...</div>
+  <div class="row" id="statusLine" style="color:#e6e6e6;">Ожидание доступа к MIDI</div>
   <div class="row">
     <button id="zoomOut">-</button>
     <span id="zoomLabel">100%</span>
@@ -278,11 +282,11 @@
   <div class="panelSection" id="accidentalsBox">
     <div class="sectionTitle">Бемоль вместо диеза (отдельно по нотам):</div>
     <div class="btnGrid">
-      <label><input type="checkbox" class="accCheckbox" data-index="1"> C#/Db</label>
-      <label><input type="checkbox" class="accCheckbox" data-index="3"> D#/Eb</label>
-      <label><input type="checkbox" class="accCheckbox" data-index="6"> F#/Gb</label>
-      <label><input type="checkbox" class="accCheckbox" data-index="8"> G#/Ab</label>
-      <label><input type="checkbox" class="accCheckbox" data-index="10"> A#/Bb</label>
+      <label><input type="checkbox" class="accCheckbox" data-index="1"> <span>C#/Db</span></label>
+      <label><input type="checkbox" class="accCheckbox" data-index="3"> <span>D#/Eb</span></label>
+      <label><input type="checkbox" class="accCheckbox" data-index="6"> <span>F#/Gb</span></label>
+      <label><input type="checkbox" class="accCheckbox" data-index="8"> <span>G#/Ab</span></label>
+      <label><input type="checkbox" class="accCheckbox" data-index="10"> <span>A#/Bb</span></label>
     </div>
   </div>
 
