@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Full Display Chords</title>
+<title>Notes in Web</title>
 <style>
 @font-face {
   font-family: 'PT Sans Bold Embedded';
@@ -53,7 +53,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     color: var(--text-color);
-    font-family: 'PT Sans Bold Embedded', Arial, Helvetica, sans-serif; 
+    font-family: 'PT Sans Bold Embedded', Arial, Helvetica, sans-serif;
     font-weight: 700;
     font-size: calc(var(--font-size-base) * var(--zoom) / 100);
     white-space: nowrap;
@@ -68,65 +68,163 @@
     top: var(--panel-top, 20px);
     left: 50%;
     transform: translateX(-50%);
-    padding: 10px 14px;
-    background: rgba(0,0,0,0.75);
-    color: #eee;
-    font-family: 'PT Sans Bold Embedded', Arial, sans-serif;
-    font-size: 13px;
+    padding: 24px;
+    background: #141414;
+    color: #e6e6e6;
+    font-family: Arial, sans-serif;
+    font-size: 15px;
     z-index: 10;
-    border-radius: 10px;
+    border-radius: 18px;
+    border: 1px solid #2a2a2a;
     display: none;
+    width: 620px;
+    max-width: 90vw;
+    box-sizing: border-box;
   }
 
-  #controlPanel select, #controlPanel button {
-    font-size: 13px;
-    margin: 2px 4px 2px 0;
+  #controlPanel select {
+    font-size: 15px;
+    background: #1f1f1f;
+    color: #eee;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 8px 12px;
   }
 
   #zoomLabel {
     display: inline-block;
-    min-width: 45px;
+    min-width: 70px;
+    text-align: center;
+    background: #262626;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-weight: bold;
+    font-size: 15px;
   }
 
-  .row { margin-bottom: 6px; }
+  #zoomOut, #zoomIn {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: #262626;
+    color: #eee;
+    border: 1px solid #3a3a3a;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  #zoomOut:hover, #zoomIn:hover { background: #303030; }
+
+  .row { margin-bottom: 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+  .row.labelRow {
+    justify-content: space-between;
+  }
+  .row.labelRow > label {
+    color: #aaa;
+    width: 230px;
+    flex: 0 0 230px;
+  }
+  .row.labelRow > select {
+    flex: 1;
+  }
+
+  /* Карточки-секции, как на референсе */
+  .panelSection {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+  }
+  .panelSection:last-child { margin-bottom: 0; }
+
+  .sectionTitle {
+    color: #999;
+    letter-spacing: 0.03em;
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
 
   #accidentalsBox label {
-    display: inline-block;
-    margin-right: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 18px;
+    font-size: 14px;
+    color: #ddd;
   }
 
   /* Панель тоники/лада — единственный выбор в каждой группе (как радио-кнопки) */
-  #scalePanel {
-    margin-top: 4px;
-    padding-top: 8px;
-    border-top: 1px solid #444;
-  }
   #scalePanel .groupTitle {
-    color: #aaa;
-    margin: 6px 0 4px;
+    color: #999;
+    letter-spacing: 0.03em;
+    margin: 0 0 12px;
     font-size: 12px;
+    text-transform: uppercase;
   }
+  #scalePanel .btnGrid:first-of-type { margin-bottom: 28px; }
+
   .btnGrid {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
-    max-width: 460px;
+    gap: 8px;
   }
   .toggleBtn {
-    background: #333;
-    color: #ddd;
-    border: 1px solid #555;
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 13px;
+    background: #1f1f1f;
+    color: #ccc;
+    border: 1px solid #3a3a3a;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
     cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
   }
-  .toggleBtn:hover { background: #3f3f3f; }
+  .toggleBtn:hover { background: #2a2a2a; }
   .toggleBtn.active {
-    background: #2e7d32;
-    border-color: #4caf50;
+    background: #6b6b6b;
+    border-color: #8a8a8a;
     color: #fff;
     font-weight: bold;
+  }
+
+  /* Чекбоксы в стиле референса: квадрат со скруглением и галочкой */
+  #controlPanel input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border: 1px solid #4a4a4a;
+    background: #1f1f1f;
+    cursor: pointer;
+    position: relative;
+    top: 7px;
+    flex-shrink: 0;
+  }
+  #controlPanel input[type="checkbox"]:checked {
+    background: #6b6b6b;
+    border-color: #8a8a8a;
+  }
+  #controlPanel input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  #controlPanel > .row > label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #ddd;
+    font-size: 14px;
   }
 
   /* Строка с номером обращения аккорда — отдельная, независимая от строки ноты/аккорда */
@@ -161,42 +259,47 @@
 <body>
 
 <div id="controlPanel">
-  <div class="row">
-    <label>MIDI вход: </label>
+  <div class="row labelRow">
+    <label>MIDI вход:</label>
     <select id="inputSelect"><option>—</option></select>
   </div>
-  <div class="row">
-    <label>MIDI выход (напр. loopMIDI): </label>
+  <div class="row labelRow">
+    <label>MIDI выход (напр. loopMIDI):</label>
     <select id="outputSelect"><option>—</option></select>
   </div>
-  <div class="row" id="statusLine" style="color:#8f8;">Ожидание доступа к MIDI...</div>
+  <div class="row" id="statusLine" style="color:#e6e6e6;">Ожидание доступа к MIDI...</div>
   <div class="row">
     <button id="zoomOut">-</button>
     <span id="zoomLabel">100%</span>
     <button id="zoomIn">+</button>
     <span style="margin-left:8px;color:#999;">(Shift + "-" = сброс до 100%)</span>
   </div>
-  <div class="row" id="accidentalsBox">
-    <div style="color:#aaa;margin-bottom:4px;">Бемоль вместо диеза (отдельно по нотам):</div>
-    <label><input type="checkbox" class="accCheckbox" data-index="1"> C#/Db</label>
-    <label><input type="checkbox" class="accCheckbox" data-index="3"> D#/Eb</label>
-    <label><input type="checkbox" class="accCheckbox" data-index="6"> F#/Gb</label>
-    <label><input type="checkbox" class="accCheckbox" data-index="8"> G#/Ab</label>
-    <label><input type="checkbox" class="accCheckbox" data-index="10"> A#/Bb</label>
+
+  <div class="panelSection" id="accidentalsBox">
+    <div class="sectionTitle">Бемоль вместо диеза (отдельно по нотам):</div>
+    <div class="btnGrid">
+      <label><input type="checkbox" class="accCheckbox" data-index="1"> C#/Db</label>
+      <label><input type="checkbox" class="accCheckbox" data-index="3"> D#/Eb</label>
+      <label><input type="checkbox" class="accCheckbox" data-index="6"> F#/Gb</label>
+      <label><input type="checkbox" class="accCheckbox" data-index="8"> G#/Ab</label>
+      <label><input type="checkbox" class="accCheckbox" data-index="10"> A#/Bb</label>
+    </div>
   </div>
 
-  <div id="scalePanel">
-    <div class="groupTitle">ТОНИКИ (можно выбрать только одну)</div>
+  <div class="panelSection" id="scalePanel">
+    <div class="groupTitle">Тоники (можно выбрать только одну)</div>
     <div class="btnGrid" id="tonicGrid"></div>
-    <div class="groupTitle">ТОНАЛЬНОСТИ / ЛАДЫ (можно выбрать только один)</div>
+    <div class="groupTitle">Тональности / лады (можно выбрать только один)</div>
     <div class="btnGrid" id="modeGrid"></div>
   </div>
 
-  <div class="row" style="margin-top:8px;padding-top:8px;border-top:1px solid #444;">
-    <label><input type="checkbox" id="showInversionCheckbox"> Показывать номер обращения аккорда (клавиши 9/0 — размер)</label>
-  </div>
-  <div class="row">
-    <label><input type="checkbox" id="showDegreeCheckbox"> Показывать ступень лада (клавиши 7/8 — размер)</label>
+  <div class="panelSection" style="padding-top:20px;">
+    <div class="row" style="margin-bottom:16px;">
+      <label><input type="checkbox" id="showInversionCheckbox"> Показывать номер обращения аккорда (клавиши 9/0 — размер)</label>
+    </div>
+    <div class="row" style="margin-bottom:0;">
+      <label><input type="checkbox" id="showDegreeCheckbox"> Показывать ступень лада (клавиши 7/8 — размер)</label>
+    </div>
   </div>
 </div>
 
@@ -486,6 +589,16 @@
     }
   });
 
+  // Колесо мыши: вверх открывает панель настроек, вниз закрывает.
+  window.addEventListener('wheel', (e) => {
+    const panel = document.getElementById('controlPanel');
+    if (e.deltaY < 0) {
+      panel.style.display = 'block';
+    } else if (e.deltaY > 0) {
+      panel.style.display = 'none';
+    }
+  }, { passive: true });
+
   function syncAccidentalCheckboxes() {
     document.querySelectorAll('.accCheckbox').forEach(cb => {
       const idx = Number(cb.dataset.index);
@@ -509,6 +622,34 @@
   // Возвращает структуру с текстом для основной строки, а также данными,
   // необходимыми для строк "обращение" и "ступень лада":
   // { text, matched, isSingle, root (pitch class), tmplName, bassPc, orderedPcs }
+  // Выбор наиболее подходящей трактовки среди нескольких равнозначных по составу нот
+  // вариантов (например, G sus2 и D sus4 — один и тот же набор нот, разный "корень").
+  // Приоритет:
+  //   1) Если выбраны тоника и лад — предпочитаем вариант, чей корень входит
+  //      в текущий лад как диатоническая ступень (см. degreeIndexInScale).
+  //   2) Если по тонике/ладу однозначно выбрать не получилось (0 или несколько
+  //      подходящих вариантов) — предпочитаем вариант, чей корень совпадает
+  //      с басовой нотой (самой нижней нажатой нотой).
+  //   3) Если и это не помогло — оставляем как было раньше: первый найденный
+  //      вариант в исходном порядке перебора (candidates[0]).
+  function pickBestCandidate(candidates, bassPc) {
+    if (candidates.length === 1) return candidates[0];
+
+    let pool = candidates;
+
+    if (selectedTonic && selectedMode) {
+      const diatonic = pool.filter(c => degreeIndexInScale(c.root) !== null);
+      if (diatonic.length === 1) return diatonic[0];
+      if (diatonic.length > 1) pool = diatonic;
+    }
+
+    const byBass = pool.filter(c => c.root === bassPc);
+    if (byBass.length === 1) return byBass[0];
+    if (byBass.length > 1) pool = byBass;
+
+    return pool[0];
+  }
+
   function detectChordInfo(noteNumbers) {
     if (noteNumbers.size === 0) {
       return { text: hasPlayedNote ? '' : PLACEHOLDER_TEXT, matched: false };
@@ -535,6 +676,10 @@
     // чтобы не путать частичные совпадения.
     const sortedTemplates = [...CHORD_TEMPLATES].sort((a, b) => b.intervals.length - a.intervals.length);
 
+    // Собираем ВСЕ совпадающие варианты (шаблон + корень) для текущего набора нот —
+    // одному и тому же набору pitch-class'ов может соответствовать несколько
+    // равнозначных по составу трактовок (например, G sus2 и D sus4 — одни и те же ноты).
+    const candidates = [];
     for (const tmpl of sortedTemplates) {
       if (tmpl.intervals.length !== pitchClasses.length) continue;
       for (const root of pitchClasses) {
@@ -542,18 +687,24 @@
           .map(pc => (pc - root + 12) % 12)
           .sort((a, b) => a - b);
         if (arraysEqual(rel, tmpl.intervals)) {
-          let text;
-          if (tmpl.name === 'maj') text = names[root];
-          else if (tmpl.name === 'min') text = `${names[root]}m`;
-          else text = `${names[root]} ${tmpl.name}`;
-
-          const orderedPcs = pitchClasses
-            .slice()
-            .sort((a, b) => ((a - root + 12) % 12) - ((b - root + 12) % 12));
-
-          return { text, matched: true, isSingle: false, root, tmplName: tmpl.name, bassPc, orderedPcs };
+          candidates.push({ tmpl, root });
         }
       }
+    }
+
+    if (candidates.length > 0) {
+      const chosen = pickBestCandidate(candidates, bassPc);
+      const { tmpl, root } = chosen;
+      let text;
+      if (tmpl.name === 'maj') text = names[root];
+      else if (tmpl.name === 'min') text = `${names[root]}m`;
+      else text = `${names[root]} ${tmpl.name}`;
+
+      const orderedPcs = pitchClasses
+        .slice()
+        .sort((a, b) => ((a - root + 12) % 12) - ((b - root + 12) % 12));
+
+      return { text, matched: true, isSingle: false, root, tmplName: tmpl.name, bassPc, orderedPcs };
     }
 
     // Совпадение не найдено — просто перечисляем ноты (обращение/ступень не показываем)
@@ -707,7 +858,7 @@
         inputSelect.appendChild(opt);
       });
       statusLine.textContent = `Входы: ${inputs.map(i => i.name).join(', ')}`;
-      statusLine.style.color = '#8f8';
+      statusLine.style.color = '#e6e6e6';
     }
 
     if (outputs.length === 0) {
