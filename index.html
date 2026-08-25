@@ -337,6 +337,7 @@
     { name: '11',       intervals: [0,2,4,5,7,10] },
     { name: 'maj11',    intervals: [0,2,4,5,7,11] },
     { name: 'm11',      intervals: [0,2,3,5,7,10] },
+    { name: 'm(maj11)', intervals: [0,2,3,5,7,11] },
 
     { name: '9',        intervals: [0,2,4,7,10] },
     { name: 'maj9',     intervals: [0,2,4,7,11] },
@@ -360,6 +361,8 @@
     { name: 'augM7',    intervals: [0,4,8,11] },
     { name: 'add9',     intervals: [0,2,4,7] },
     { name: 'm add9',   intervals: [0,2,3,7] },
+    { name: 'add11',    intervals: [0,4,5,7] },
+    { name: 'm(add11)', intervals: [0,3,5,7] },
 
     { name: 'maj',      intervals: [0,4,7] },
     { name: 'min',      intervals: [0,3,7] },
@@ -378,6 +381,7 @@
     '11':       { case: 'upper', symbol: '' },
     'maj11':    { case: 'upper', symbol: '' },
     'm11':      { case: 'lower', symbol: '' },
+    'm(maj11)': { case: 'lower', symbol: '' },
     '9':        { case: 'upper', symbol: '' },
     'maj9':     { case: 'upper', symbol: '' },
     'm9':       { case: 'lower', symbol: '' },
@@ -398,6 +402,8 @@
     'augM7':    { case: 'upper', symbol: '+' },
     'add9':     { case: 'upper', symbol: '' },
     'm add9':   { case: 'lower', symbol: '' },
+    'add11':    { case: 'upper', symbol: '' },
+    'm(add11)': { case: 'lower', symbol: '' },
     'maj':      { case: 'upper', symbol: '' },
     'min':      { case: 'lower', symbol: '' },
     'sus2':     { case: 'upper', symbol: '' },
@@ -591,6 +597,18 @@
       applyDegreeZoom();
       saveSettings();
     }
+  });
+
+  // Нажатие на колесо мыши (средняя кнопка) — открыть/закрыть панель настроек
+  window.addEventListener('auxclick', (e) => {
+    if (e.button !== 1) return;
+    e.preventDefault();
+    const panel = document.getElementById('controlPanel');
+    panel.style.display = (panel.style.display === 'none' || !panel.style.display) ? 'block' : 'none';
+  });
+  // Гасим стандартный автоскролл браузера по средней кнопке
+  window.addEventListener('mousedown', (e) => {
+    if (e.button === 1) e.preventDefault();
   });
 
   // Колесо мыши: вверх открывает панель настроек, вниз закрывает.
