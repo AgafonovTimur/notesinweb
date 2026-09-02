@@ -31,6 +31,13 @@
     --degree-top: 850px;   /* ПОЗИЦИЯ ступени лада — отступ сверху (хардкодьте как нужно) */
     --degree-left: 1800px; /* ПОЗИЦИЯ ступени лада — отступ слева (хардкодьте как нужно) */
     /* ------------------------------------------------------------------ */
+
+    /* ---- СТРОКА "ПОЛИАККОРД" (#polyDisplay) — правьте здесь ---- */
+    --poly-color: #8e8e8e;      /* ЦВЕТ строки полиаккорда */
+    --poly-font-size-base: 150px; /* БАЗОВЫЙ РАЗМЕР полиаккорда (при масштабе 100%), дальше масштабируется общими кнопками +/- */
+    --poly-top: 1050px;   /* ПОЗИЦИЯ полиаккорда — отступ сверху (хардкодьте как нужно) */
+    --poly-left: 750px;   /* ПОЗИЦИЯ полиаккорда — отступ слева (хардкодьте как нужно) */
+    /* ------------------------------------------------------------------ */
     /* ========================================= */
 
     --zoom: 100; /* текущий масштаб в процентах, меняется кнопками +/- (относится к строке ноты/аккорда) */
@@ -258,6 +265,20 @@
     user-select: none;
     line-height: 1;
   }
+
+  /* Строка с полиаккордом — показывается только когда обычный аккорд не определился */
+  #polyDisplay {
+    position: fixed;
+    top: var(--poly-top);
+    left: var(--poly-left);
+    color: var(--poly-color);
+    font-family: 'PT Sans Bold Embedded', Arial, Helvetica, sans-serif;
+    font-weight: 700;
+    font-size: calc(var(--poly-font-size-base) * var(--zoom) / 100);
+    white-space: nowrap;
+    user-select: none;
+    line-height: 1;
+  }
 </style>
 </head>
 <body>
@@ -301,8 +322,11 @@
     <div class="row" style="margin-bottom:16px;">
       <label><input type="checkbox" id="showInversionCheckbox"> Показывать номер обращения аккорда (клавиши 9/0 — размер)</label>
     </div>
-    <div class="row" style="margin-bottom:0;">
+    <div class="row" style="margin-bottom:16px;">
       <label><input type="checkbox" id="showDegreeCheckbox"> Показывать ступень лада (клавиши 7/8 — размер)</label>
+    </div>
+    <div class="row" style="margin-bottom:0;">
+      <label><input type="checkbox" id="showPolyCheckbox"> Показывать полиаккорд, если аккорд не определился (размер — кнопками +/-)</label>
     </div>
   </div>
 </div>
@@ -310,6 +334,7 @@
 <div id="chordDisplay"></div>
 <div id="inversionDisplay"></div>
 <div id="degreeDisplay"></div>
+<div id="polyDisplay"></div>
 
 <script>
 (function () {
@@ -333,84 +358,170 @@
   // Шаблоны аккордов: интервалы от корня (0), отсортированы по возрастанию.
   // Порядок важен только для приоритета при полном совпадении по количеству нот —
   // сначала проверяем более крупные (длинные) аккорды.
+  // Шаблоны аккордов: интервалы от корня (0), отсортированы по возрастанию.
+  // name — суффикс, который дописывается к названию ноты (C + "maj7" = "Cmaj7").
+  // Совпадение СТРОГОЕ: набор нажатых нот должен совпасть с шаблоном нота в ноту.
+  // Варианты с пометкой (no5) — это те же аккорды без квинты, они добавлены
+  // отдельными строчками, иначе сложные надстройки почти невозможно взять руками.
   const CHORD_TEMPLATES = [
-    { name: '11',       intervals: [0,2,4,5,7,10] },
-    { name: 'maj11',    intervals: [0,2,4,5,7,11] },
-    { name: 'm11',      intervals: [0,2,3,5,7,10] },
-    { name: 'm(maj11)', intervals: [0,2,3,5,7,11] },
+    // ===== 7 нот =====
+    { name: '13',            intervals: [0,2,4,5,7,9,10] },
+    { name: 'maj13',         intervals: [0,2,4,5,7,9,11] },
+    { name: 'm13',           intervals: [0,2,3,5,7,9,10] },
 
-    { name: '9',        intervals: [0,2,4,7,10] },
-    { name: 'maj9',     intervals: [0,2,4,7,11] },
-    { name: 'm9',       intervals: [0,2,3,7,10] },
-    { name: 'minmaj9',  intervals: [0,2,3,7,11] },
+    // ===== 6 нот =====
+    { name: '13',            intervals: [0,2,4,7,9,10] },   // без 11-й
+    { name: 'maj13',         intervals: [0,2,4,7,9,11] },
+    { name: 'm13',           intervals: [0,2,3,7,9,10] },
+    { name: '11',            intervals: [0,2,4,5,7,10] },
+    { name: 'maj11',         intervals: [0,2,4,5,7,11] },
+    { name: 'm11',           intervals: [0,2,3,5,7,10] },
+    { name: 'm(maj11)',      intervals: [0,2,3,5,7,11] },
+    { name: '7alt',          intervals: [0,1,3,4,6,10] },   // b9 #9 b5
+    { name: '7alt',          intervals: [0,1,3,4,8,10] },   // b9 #9 #5
+    { name: '13(#11)',       intervals: [0,2,4,6,9,10] },
+    { name: 'maj13(#11)',    intervals: [0,2,4,6,9,11] },
 
-    { name: '6add9',    intervals: [0,2,4,7,9] },
+    // ===== 5 нот =====
+    { name: '13',            intervals: [0,2,4,9,10] },     // без 5-й и 11-й
+    { name: 'maj13',         intervals: [0,2,4,9,11] },
+    { name: 'm13',           intervals: [0,2,3,9,10] },
+    { name: '9',             intervals: [0,2,4,7,10] },
+    { name: 'maj9',          intervals: [0,2,4,7,11] },
+    { name: 'm9',            intervals: [0,2,3,7,10] },
+    { name: 'm(maj9)',       intervals: [0,2,3,7,11] },
+    { name: '9sus4',         intervals: [0,2,5,7,10] },
+    { name: '6/9',           intervals: [0,2,4,7,9] },
+    { name: 'm6/9',          intervals: [0,2,3,7,9] },
+    { name: '7(add11)',      intervals: [0,4,5,7,10] },
+    { name: 'm7(add11)',     intervals: [0,3,5,7,10] },
+    { name: '7(b9)',         intervals: [0,1,4,7,10] },
+    { name: '7(#9)',         intervals: [0,3,4,7,10] },
+    { name: '7(#11)',        intervals: [0,4,6,7,10] },
+    { name: '9(#11)',        intervals: [0,2,4,6,10] },
+    { name: 'maj9(#11)',     intervals: [0,2,4,6,11] },
+    { name: '9(#5)',         intervals: [0,2,4,8,10] },
+    { name: '7(b13)',        intervals: [0,4,7,8,10] },
+    { name: 'maj7(#11)',     intervals: [0,4,6,7,11] },
+    { name: '7(b5b9)',      intervals: [0,1,4,6,10] },
+    { name: '7(b5#9)',      intervals: [0,3,4,6,10] },
+    { name: '7(#5b9)',      intervals: [0,1,4,8,10] },
+    { name: '7(#5#9)',      intervals: [0,3,4,8,10] },
 
-    { name: '7',        intervals: [0,4,7,10] },
-    { name: 'maj7',     intervals: [0,4,7,11] },
-    { name: 'm7',       intervals: [0,3,7,10] },
-    { name: '7b5',      intervals: [0,4,6,10] },
-    { name: '7#5',      intervals: [0,4,8,10] },
-    { name: 'm7b5',     intervals: [0,3,6,10] },
-    { name: 'minmaj7',  intervals: [0,3,7,11] },
-    { name: '7sus4',    intervals: [0,5,7,10] },
-    { name: '6',        intervals: [0,4,7,9] },
-    { name: 'min6',     intervals: [0,3,7,9] },
-    { name: 'dim7',     intervals: [0,3,6,9] },
-    { name: 'dimM7',    intervals: [0,3,6,11] },
-    { name: 'augM7',    intervals: [0,4,8,11] },
-    { name: 'add9',     intervals: [0,2,4,7] },
-    { name: 'm add9',   intervals: [0,2,3,7] },
-    { name: 'add11',    intervals: [0,4,5,7] },
-    { name: 'm(add11)', intervals: [0,3,5,7] },
+    // ===== 4 ноты =====
+    { name: '7',             intervals: [0,4,7,10] },
+    { name: 'maj7',          intervals: [0,4,7,11] },
+    { name: 'm7',            intervals: [0,3,7,10] },
+    { name: 'm7(b5)',        intervals: [0,3,6,10] },
+    { name: 'dim7',          intervals: [0,3,6,9] },
+    { name: 'm(maj7)',       intervals: [0,3,7,11] },
+    { name: 'dim(maj7)',     intervals: [0,3,6,11] },
+    { name: 'maj7(#5)',      intervals: [0,4,8,11] },
+    { name: '7(#5)',         intervals: [0,4,8,10] },
+    { name: '7(b5)',         intervals: [0,4,6,10] },
+    { name: '7sus4',         intervals: [0,5,7,10] },
+    { name: '7sus2',         intervals: [0,2,7,10] },
+    { name: '6',             intervals: [0,4,7,9] },
+    { name: 'm6',            intervals: [0,3,7,9] },
+    { name: 'add9',          intervals: [0,2,4,7] },
+    { name: 'm(add9)',       intervals: [0,2,3,7] },
+    { name: 'add11',         intervals: [0,4,5,7] },
+    { name: 'm(add11)',      intervals: [0,3,5,7] },
+    { name: '9(no5)',        intervals: [0,2,4,10] },
+    { name: 'maj9(no5)',     intervals: [0,2,4,11] },
+    { name: 'm9(no5)',       intervals: [0,2,3,10] },
+    { name: '13(no5)',       intervals: [0,4,9,10] },
+    { name: 'm13(no5)',      intervals: [0,3,9,10] },
+    { name: '7(b9)(no5)',    intervals: [0,1,4,10] },
+    { name: '7(#9)(no5)',    intervals: [0,3,4,10] },
 
-    { name: 'maj',      intervals: [0,4,7] },
-    { name: 'min',      intervals: [0,3,7] },
-    { name: 'sus2',     intervals: [0,2,7] },
-    { name: 'sus4',     intervals: [0,5,7] },
-    { name: 'dim',      intervals: [0,3,6] },
-    { name: 'aug',      intervals: [0,4,8] },
+    // ===== 3 ноты =====
+    { name: '',              intervals: [0,4,7] },          // мажор: просто "C"
+    { name: 'm',             intervals: [0,3,7] },
+    { name: 'dim',           intervals: [0,3,6] },
+    { name: 'aug',           intervals: [0,4,8] },
+    { name: 'sus2',          intervals: [0,2,7] },
+    { name: 'sus4',          intervals: [0,5,7] },
+    { name: '7(no5)',        intervals: [0,4,10] },
+    { name: 'm7(no5)',       intervals: [0,3,10] },
+    { name: 'maj7(no5)',     intervals: [0,4,11] },
+    { name: 'm(maj7)(no5)',  intervals: [0,3,11] },
 
-    { name: '5',        intervals: [0,7] },
+    // ===== 2 ноты =====
+    { name: '5',             intervals: [0,7] },
   ];
 
   // Качество каждого шаблона аккорда для отображения ступени лада римской цифрой:
   // case: 'upper' — заглавная (мажорное трезвучие в основе), 'lower' — строчная (минорное).
   // symbol: '' — ничего, '+' — увеличенное трезвучие, '°' — уменьшенное трезвучие.
   const QUALITY_MAP = {
-    '11':       { case: 'upper', symbol: '' },
-    'maj11':    { case: 'upper', symbol: '' },
-    'm11':      { case: 'lower', symbol: '' },
-    'm(maj11)': { case: 'lower', symbol: '' },
-    '9':        { case: 'upper', symbol: '' },
-    'maj9':     { case: 'upper', symbol: '' },
-    'm9':       { case: 'lower', symbol: '' },
-    'minmaj9':  { case: 'lower', symbol: '' },
-    '6add9':    { case: 'upper', symbol: '' },
-    '7':        { case: 'upper', symbol: '' },
-    'maj7':     { case: 'upper', symbol: '' },
-    'm7':       { case: 'lower', symbol: '' },
-    '7b5':      { case: 'upper', symbol: '' },
-    '7#5':      { case: 'upper', symbol: '+' },
-    'm7b5':     { case: 'lower', symbol: '°' },
-    'minmaj7':  { case: 'lower', symbol: '' },
-    '7sus4':    { case: 'upper', symbol: '' },
-    '6':        { case: 'upper', symbol: '' },
-    'min6':     { case: 'lower', symbol: '' },
-    'dim7':     { case: 'lower', symbol: '°' },
-    'dimM7':    { case: 'lower', symbol: '°' },
-    'augM7':    { case: 'upper', symbol: '+' },
-    'add9':     { case: 'upper', symbol: '' },
-    'm add9':   { case: 'lower', symbol: '' },
-    'add11':    { case: 'upper', symbol: '' },
-    'm(add11)': { case: 'lower', symbol: '' },
-    'maj':      { case: 'upper', symbol: '' },
-    'min':      { case: 'lower', symbol: '' },
-    'sus2':     { case: 'upper', symbol: '' },
-    'sus4':     { case: 'upper', symbol: '' },
-    'dim':      { case: 'lower', symbol: '°' },
-    'aug':      { case: 'upper', symbol: '+' },
-    '5':        { case: 'upper', symbol: '' },
+    '13':            { case: 'upper', symbol: '' },
+    'maj13':         { case: 'upper', symbol: '' },
+    'm13':           { case: 'lower', symbol: '' },
+    '11':            { case: 'upper', symbol: '' },
+    'maj11':         { case: 'upper', symbol: '' },
+    'm11':           { case: 'lower', symbol: '' },
+    'm(maj11)':      { case: 'lower', symbol: '' },
+    '7alt':          { case: 'upper', symbol: '' },
+    '9':             { case: 'upper', symbol: '' },
+    'maj9':          { case: 'upper', symbol: '' },
+    'm9':            { case: 'lower', symbol: '' },
+    'm(maj9)':       { case: 'lower', symbol: '' },
+    '9sus4':         { case: 'upper', symbol: '' },
+    '6/9':           { case: 'upper', symbol: '' },
+    'm6/9':          { case: 'lower', symbol: '' },
+    '7(add11)':      { case: 'upper', symbol: '' },
+    'm7(add11)':     { case: 'lower', symbol: '' },
+    '7(b9)':         { case: 'upper', symbol: '' },
+    '7(#9)':         { case: 'upper', symbol: '' },
+    '7(#11)':        { case: 'upper', symbol: '' },
+    '9(#11)':        { case: 'upper', symbol: '' },
+    'maj9(#11)':     { case: 'upper', symbol: '' },
+    '9(#5)':         { case: 'upper', symbol: '+' },
+    '13(#11)':       { case: 'upper', symbol: '' },
+    'maj13(#11)':    { case: 'upper', symbol: '' },
+    '7(b13)':        { case: 'upper', symbol: '' },
+    'maj7(#11)':     { case: 'upper', symbol: '' },
+    '7(b5b9)':      { case: 'upper', symbol: '' },
+    '7(b5#9)':      { case: 'upper', symbol: '' },
+    '7(#5b9)':      { case: 'upper', symbol: '+' },
+    '7(#5#9)':      { case: 'upper', symbol: '+' },
+    '7':             { case: 'upper', symbol: '' },
+    'maj7':          { case: 'upper', symbol: '' },
+    'm7':            { case: 'lower', symbol: '' },
+    'm7(b5)':        { case: 'lower', symbol: '°' },
+    'dim7':          { case: 'lower', symbol: '°' },
+    'm(maj7)':       { case: 'lower', symbol: '' },
+    'dim(maj7)':     { case: 'lower', symbol: '°' },
+    'maj7(#5)':      { case: 'upper', symbol: '+' },
+    '7(#5)':         { case: 'upper', symbol: '+' },
+    '7(b5)':         { case: 'upper', symbol: '' },
+    '7sus4':         { case: 'upper', symbol: '' },
+    '7sus2':         { case: 'upper', symbol: '' },
+    '6':             { case: 'upper', symbol: '' },
+    'm6':            { case: 'lower', symbol: '' },
+    'add9':          { case: 'upper', symbol: '' },
+    'm(add9)':       { case: 'lower', symbol: '' },
+    'add11':         { case: 'upper', symbol: '' },
+    'm(add11)':      { case: 'lower', symbol: '' },
+    '9(no5)':        { case: 'upper', symbol: '' },
+    'maj9(no5)':     { case: 'upper', symbol: '' },
+    'm9(no5)':       { case: 'lower', symbol: '' },
+    '13(no5)':       { case: 'upper', symbol: '' },
+    'm13(no5)':      { case: 'lower', symbol: '' },
+    '7(b9)(no5)':    { case: 'upper', symbol: '' },
+    '7(#9)(no5)':    { case: 'upper', symbol: '' },
+    '':              { case: 'upper', symbol: '' },
+    'm':             { case: 'lower', symbol: '' },
+    'dim':           { case: 'lower', symbol: '°' },
+    'aug':           { case: 'upper', symbol: '+' },
+    'sus2':          { case: 'upper', symbol: '' },
+    'sus4':          { case: 'upper', symbol: '' },
+    '7(no5)':        { case: 'upper', symbol: '' },
+    'm7(no5)':       { case: 'lower', symbol: '' },
+    'maj7(no5)':     { case: 'upper', symbol: '' },
+    'm(maj7)(no5)':  { case: 'lower', symbol: '' },
+    '5':             { case: 'upper', symbol: '' },
   };
   const DEFAULT_QUALITY = { case: 'upper', symbol: '' }; // используется для одиночной ноты
 
@@ -431,6 +542,7 @@
   const chordDisplay = document.getElementById('chordDisplay');
   const inversionDisplay = document.getElementById('inversionDisplay');
   const degreeDisplay = document.getElementById('degreeDisplay');
+  const polyDisplay = document.getElementById('polyDisplay');
   const inputSelect = document.getElementById('inputSelect');
   const outputSelect = document.getElementById('outputSelect');
   const statusLine = document.getElementById('statusLine');
@@ -516,12 +628,23 @@
     document.documentElement.style.setProperty('--degree-zoom', degreeZoom);
   }
 
-  // Показ строк обращения/ступени лада — управляется чекбоксами в панели настроек
+  // Строка "полиаккорд" отдельного масштаба не имеет — она использует общий
+  // масштаб --zoom, то есть меняется теми же кнопками +/- , что и строка аккорда.
+
+  // Показ строк обращения/ступени лада/полиаккорда — управляется чекбоксами в панели настроек
   let showInversions = false;
   let showDegrees = false;
+  let showPoly = false;
 
   const showInversionCheckbox = document.getElementById('showInversionCheckbox');
   const showDegreeCheckbox = document.getElementById('showDegreeCheckbox');
+  const showPolyCheckbox = document.getElementById('showPolyCheckbox');
+
+  showPolyCheckbox.addEventListener('change', () => {
+    showPoly = showPolyCheckbox.checked;
+    updateDisplay();
+    saveSettings();
+  });
 
   showInversionCheckbox.addEventListener('change', () => {
     showInversions = showInversionCheckbox.checked;
@@ -717,10 +840,8 @@
     if (candidates.length > 0) {
       const chosen = pickBestCandidate(candidates, bassPc);
       const { tmpl, root } = chosen;
-      let text;
-      if (tmpl.name === 'maj') text = names[root];
-      else if (tmpl.name === 'min') text = `${names[root]}m`;
-      else text = `${names[root]} ${tmpl.name}`;
+      // Суффикс дописывается к названию ноты без пробела: C + "maj7" = "Cmaj7"
+      const text = names[root] + tmpl.name;
 
       const orderedPcs = pitchClasses
         .slice()
@@ -729,12 +850,82 @@
       return { text, matched: true, isSingle: false, root, tmplName: tmpl.name, bassPc, orderedPcs };
     }
 
-    // Совпадение не найдено — просто перечисляем ноты (обращение/ступень не показываем)
+    // Совпадение не найдено — просто перечисляем ноты (обращение/ступень не показываем).
+    // pitchClasses и bassPc возвращаем, чтобы можно было попробовать разобрать
+    // набор как полиаккорд (см. detectPolychord).
     return {
       text: pitchClasses.map(pc => names[pc]).join(' '),
       matched: false,
+      pitchClasses,
+      bassPc,
     };
   }
+
+  // ====== ПОЛИАККОРДЫ (Upper Structure Triads) ======
+  // Работают только тогда, когда обычный аккорд не определился.
+  // Идея: нижнюю часть строим от басовой ноты (септаккорд или его "скелет" без квинты),
+  // а всё остальное пробуем собрать в простое трезвучие сверху.
+  // Результат: "Ab / C7(no5)" — трезвучие Ab поверх ноты C с септимой.
+  // Порядок в POLY_LOWER важен: проверяем от самых полных вариантов к самым простым.
+  const POLY_LOWER = [
+    { name: '7',            intervals: [0,4,7,10] },
+    { name: 'm7',           intervals: [0,3,7,10] },
+    { name: 'maj7',         intervals: [0,4,7,11] },
+    { name: 'm(maj7)',      intervals: [0,3,7,11] },
+    { name: '7(no5)',       intervals: [0,4,10] },
+    { name: 'm7(no5)',      intervals: [0,3,10] },
+    { name: 'maj7(no5)',    intervals: [0,4,11] },
+    { name: 'm(maj7)(no5)', intervals: [0,3,11] },
+    { name: '',             intervals: [0,4,7] },
+    { name: 'm',            intervals: [0,3,7] },
+    { name: '5',            intervals: [0,7] },
+    { name: '',             intervals: [0] },
+  ];
+
+  // Верхнее трезвучие. Порядок = приоритет: мажор, минор, увеличенное, уменьшенное.
+  const POLY_UPPER = [
+    { name: '',    intervals: [0,4,7] },
+    { name: 'm',   intervals: [0,3,7] },
+    { name: 'aug', intervals: [0,4,8] },
+    { name: 'dim', intervals: [0,3,6] },
+  ];
+
+  function detectPolychord(pitchClasses, bassPc) {
+    const names = noteNames();
+    const set = new Set(pitchClasses);
+
+    for (const low of POLY_LOWER) {
+      const lowPcs = low.intervals.map(i => (bassPc + i) % 12);
+      if (!lowPcs.every(pc => set.has(pc))) continue;
+
+      for (const up of POLY_UPPER) {
+        for (let r = 0; r < 12; r++) {
+          if (r === bassPc) continue; // трезвучие от самого баса — это не полиаккорд
+          const upPcs = up.intervals.map(i => (r + i) % 12);
+          if (!upPcs.every(pc => set.has(pc))) continue;
+
+          // Верхнее трезвучие должно добавлять хотя бы одну свою ноту
+          if (upPcs.every(pc => lowPcs.includes(pc))) continue;
+
+          // Обе части вместе должны покрыть весь набор нажатых нот без остатка
+          const union = new Set([...lowPcs, ...upPcs]);
+          if (union.size !== set.size) continue;
+
+          return `${names[r]}${up.name} / ${names[bassPc]}${low.name}`;
+        }
+      }
+    }
+    return null;
+  }
+
+  function updatePolyDisplay(info) {
+    if (!showPoly || info.matched || !info.pitchClasses || info.pitchClasses.length < 3) {
+      polyDisplay.textContent = '';
+      return;
+    }
+    polyDisplay.textContent = detectPolychord(info.pitchClasses, info.bassPc) || '';
+  }
+  // ==================================================
 
   function arraysEqual(a, b) {
     if (a.length !== b.length) return false;
@@ -777,7 +968,7 @@
       degreeDisplay.textContent = '';
       return;
     }
-    const q = (info.tmplName && QUALITY_MAP[info.tmplName]) || DEFAULT_QUALITY;
+    const q = (info.tmplName !== null && info.tmplName !== undefined && QUALITY_MAP[info.tmplName]) || DEFAULT_QUALITY;
     let numeral = ROMAN_NUMERALS[idx];
     if (q.case === 'lower') numeral = numeral.toLowerCase();
     degreeDisplay.textContent = numeral + q.symbol;
@@ -788,6 +979,7 @@
     chordDisplay.textContent = info.text;
     updateInversionDisplay(info);
     updateDegreeDisplay(info);
+    updatePolyDisplay(info);
   }
 
   function onMIDIMessage(event) {
@@ -1009,6 +1201,7 @@
         useFlatFor,
         showInversions,
         showDegrees,
+        showPoly,
         selectedTonic,
         selectedMode,
         zoom,
@@ -1033,6 +1226,7 @@
       }
       if (typeof data.showInversions === 'boolean') showInversions = data.showInversions;
       if (typeof data.showDegrees === 'boolean') showDegrees = data.showDegrees;
+      if (typeof data.showPoly === 'boolean') showPoly = data.showPoly;
       if (typeof data.selectedTonic === 'string' || data.selectedTonic === null) selectedTonic = data.selectedTonic;
       if (typeof data.selectedMode === 'string' || data.selectedMode === null) selectedMode = data.selectedMode;
       if (typeof data.zoom === 'number') zoom = data.zoom;
@@ -1055,6 +1249,7 @@
   refreshScaleButtons();
   showInversionCheckbox.checked = showInversions;
   showDegreeCheckbox.checked = showDegrees;
+  showPolyCheckbox.checked = showPoly;
   updateDisplay();
 
 })();
