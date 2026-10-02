@@ -21,14 +21,14 @@
     /* ---- СТРОКА "НОМЕР ОБРАЩЕНИЯ" (#inversionDisplay) — правьте здесь ---- */
     --inv-color: #8e8e8e;      /* ЦВЕТ цифры обращения - желтый #ffcc00 */
     --inv-font-size-base: 150px; /* БАЗОВЫЙ РАЗМЕР цифры обращения (при масштабе 100%), меняется клавишами 9 (меньше) / 0 (больше) */
-    --inv-top: 850px;   /* ПОЗИЦИЯ цифры обращения — отступ сверху (хардкодьте как нужно) */
+    --inv-top: 800px;   /* ПОЗИЦИЯ цифры обращения — отступ сверху (хардкодьте как нужно) */
     --inv-left: 750px;  /* ПОЗИЦИЯ цифры обращения — отступ слева (хардкодьте как нужно) */
     /* ----------------------------------------------------------------------- */
 
     /* ---- СТРОКА "СТУПЕНЬ ЛАДА" (#degreeDisplay) — правьте здесь ---- */
     --degree-color: #8e8e8e;      /* ЦВЕТ цифры/буквы ступени лада - синий #66ccff */
     --degree-font-size-base: 150px; /* БАЗОВЫЙ РАЗМЕР ступени лада (при масштабе 100%), меняется клавишами 7 (меньше) / 8 (больше) */
-    --degree-top: 850px;   /* ПОЗИЦИЯ ступени лада — отступ сверху (хардкодьте как нужно) */
+    --degree-top: 800px;   /* ПОЗИЦИЯ ступени лада — отступ сверху (хардкодьте как нужно) */
     --degree-left: 1800px; /* ПОЗИЦИЯ ступени лада — отступ слева (хардкодьте как нужно) */
     /* ------------------------------------------------------------------ */
 
@@ -39,6 +39,26 @@
     --poly-left: 750px;   /* ПОЗИЦИЯ полиаккорда — отступ слева (хардкодьте как нужно) */
     /* ------------------------------------------------------------------ */
     /* ========================================= */
+
+    /* ---- КЛАВИАТУРА 88 КЛАВИШ (галка "Показать клавиатуру") — правьте здесь ---- */
+    --kb-raise-percent: 20;      /* НА СКОЛЬКО ПОДНИМАТЬ аккорд, обращение, ступень и полиаккорд, когда клавиатура показана — в % высоты экрана (20 = 20%) */
+    --kb-bottom: 7px;            /* ОТСТУП клавиатуры от нижнего края экрана */
+    --kb-white-key: #6b6b6b;     /* ЦВЕТ белых клавиш (как в круге квинт) */
+    --kb-black-key: #161616;     /* ЦВЕТ чёрных клавиш (как в круге квинт) */
+    --kb-pressed: #689461;       /* ЦВЕТ нажатой клавиши (зелёный, как в круге квинт) */
+    --kb-label-on-white: #141414;/* ЦВЕТ буквы на нажатой белой клавише */
+    --kb-label-on-black: #fff;   /* ЦВЕТ буквы на нажатой чёрной клавише */
+    /* --------------------------------------------------------------------------- */
+
+    /* ---- Защита от сдвига при F11 (полный экран) — руками НЕ править, значения ставит скрипт ----
+       --view-top — где верх страницы на мониторе в обычном окне (высота панели браузера),
+       --view-h   — высота страницы в обычном окне.
+       В обычном окне: 0px и 100vh (всё как раньше). В полном экране (F11) скрипт подставляет
+       значения обычного окна, поэтому аккорд, обращение, ступень и полиаккорд стоят
+       на мониторе там же, где и в окне, и не уезжают вверх. */
+    --view-top: 0px;
+    --view-h: 100vh;
+    --kb-raise: calc(var(--view-h) * var(--kb-raise-percent) / 100);
 
     --zoom: 100; /* текущий масштаб в процентах, меняется кнопками +/- (относится к строке ноты/аккорда) */
     --inv-zoom: 100;    /* масштаб строки обращения, меняется клавишами 9/0 */
@@ -56,7 +76,7 @@
 
   #chordDisplay {
     position: fixed;
-    top: 50%;
+    top: calc(var(--view-top) + var(--view-h) / 2);
     left: 50%;
     transform: translate(-50%, -50%);
     color: var(--text-color);
@@ -87,6 +107,9 @@
     width: 620px;
     max-width: 90vw;
     box-sizing: border-box;
+    /* если панель не влезает в экран — прокручивается колесом мыши внутри себя */
+    max-height: calc(100vh - var(--panel-top, 20px) - 20px);
+    overflow-y: auto;
   }
 
   #controlPanel select {
@@ -122,6 +145,7 @@
   }
   #zoomOut:hover, #zoomIn:hover { background: #303030; }
 
+  #statusLine:empty { display: none; } /* пустая строка статуса MIDI не занимает место */
   .row { margin-bottom: 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
   .row.labelRow {
@@ -175,7 +199,8 @@
     font-size: 12px;
     text-transform: uppercase;
   }
-  #scalePanel .btnGrid:first-of-type { margin-bottom: 28px; }
+  /* расстояние между кнопками тоник и заголовком "Тональности / лады" */
+  #tonicGrid { margin-bottom: 28px; }
 
   .btnGrid {
     display: flex;
@@ -241,7 +266,7 @@
   /* Строка с номером обращения аккорда — отдельная, независимая от строки ноты/аккорда */
   #inversionDisplay {
     position: fixed;
-    top: var(--inv-top);
+    top: calc(var(--view-top) + var(--inv-top));
     left: var(--inv-left);
     color: var(--inv-color);
     font-family: 'PT Sans Bold Embedded', Arial, Helvetica, sans-serif;
@@ -255,7 +280,7 @@
   /* Строка со ступенью лада — отдельная, независимая от строки ноты/аккорда и от строки обращения */
   #degreeDisplay {
     position: fixed;
-    top: var(--degree-top);
+    top: calc(var(--view-top) + var(--degree-top));
     left: var(--degree-left);
     color: var(--degree-color);
     font-family: 'PT Sans Bold Embedded', Arial, Helvetica, sans-serif;
@@ -269,7 +294,7 @@
   /* Строка с полиаккордом — показывается только когда обычный аккорд не определился */
   #polyDisplay {
     position: fixed;
-    top: var(--poly-top);
+    top: calc(var(--view-top) + var(--poly-top));
     left: var(--poly-left);
     color: var(--poly-color);
     font-family: 'PT Sans Bold Embedded', Arial, Helvetica, sans-serif;
@@ -279,6 +304,37 @@
     user-select: none;
     line-height: 1;
   }
+
+  /* ====== Клавиатура 88 клавиш (A0–C8) внизу экрана ====== */
+  #pianoKeyboard {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: var(--kb-bottom);
+    display: none;
+    z-index: 5;
+    pointer-events: none;
+  }
+  body.kb-shown #pianoKeyboard { display: block; }
+  #pianoKeyboard svg { display: block; width: 100%; height: auto; }
+  .kbWhite { fill: var(--kb-white-key); stroke: var(--bg-color); stroke-width: 1.5; }
+  .kbBlack { fill: var(--kb-black-key); stroke: var(--bg-color); stroke-width: 1.5; }
+  .kbWhite.pressed, .kbBlack.pressed { fill: var(--kb-pressed); }
+  .kbLabel {
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-family: 'PT Sans Bold Embedded', Arial, Helvetica, sans-serif;
+    font-weight: 700;
+    user-select: none;
+  }
+  .kbLabel.onWhite { fill: var(--kb-label-on-white); font-size: 13px; }
+  .kbLabel.onBlack { fill: var(--kb-label-on-black); font-size: 11px; }
+
+  /* Когда клавиатура показана — аккорд, обращение, ступень и полиаккорд поднимаются на --kb-raise */
+  body.kb-shown #chordDisplay   { top: calc(var(--view-top) + var(--view-h) / 2 - var(--kb-raise)); }
+  body.kb-shown #inversionDisplay { top: calc(var(--view-top) + var(--inv-top) - var(--kb-raise)); }
+  body.kb-shown #degreeDisplay  { top: calc(var(--view-top) + var(--degree-top) - var(--kb-raise)); }
+  body.kb-shown #polyDisplay    { top: calc(var(--view-top) + var(--poly-top) - var(--kb-raise)); }
 </style>
 </head>
 <body>
@@ -289,7 +345,7 @@
     <select id="inputSelect"><option>—</option></select>
   </div>
   <div class="row labelRow">
-    <label>MIDI выход (напр. loopMIDI):</label>
+    <label>MIDI выход</label>
     <select id="outputSelect"><option>—</option></select>
   </div>
   <div class="row" id="statusLine" style="color:#e6e6e6;">Ожидание доступа к MIDI</div>
@@ -325,8 +381,11 @@
     <div class="row" style="margin-bottom:16px;">
       <label><input type="checkbox" id="showDegreeCheckbox"> Показывать ступень лада (клавиши 7/8 — размер)</label>
     </div>
-    <div class="row" style="margin-bottom:0;">
+    <div class="row" style="margin-bottom:16px;">
       <label><input type="checkbox" id="showPolyCheckbox"> Показывать полиаккорд, если аккорд не определился (размер — кнопками +/-)</label>
+    </div>
+    <div class="row" style="margin-bottom:0;">
+      <label><input type="checkbox" id="showKeyboardCheckbox"> Показать клавиатуру</label>
     </div>
   </div>
 </div>
@@ -335,6 +394,7 @@
 <div id="inversionDisplay"></div>
 <div id="degreeDisplay"></div>
 <div id="polyDisplay"></div>
+<div id="pianoKeyboard"><svg id="pianoKeyboardSvg" xmlns="http://www.w3.org/2000/svg"></svg></div>
 
 <script>
 (function () {
@@ -734,15 +794,8 @@
     if (e.button === 1) e.preventDefault();
   });
 
-  // Колесо мыши: вверх открывает панель настроек, вниз закрывает.
-  window.addEventListener('wheel', (e) => {
-    const panel = document.getElementById('controlPanel');
-    if (e.deltaY < 0) {
-      panel.style.display = 'block';
-    } else if (e.deltaY > 0) {
-      panel.style.display = 'none';
-    }
-  }, { passive: true });
+  // Колесо мыши больше НЕ открывает/закрывает настройки (только средняя кнопка и Y/Н) —
+  // колесом прокручивается сама панель настроек, если она не помещается в экран.
 
   function syncAccidentalCheckboxes() {
     document.querySelectorAll('.accCheckbox').forEach(cb => {
@@ -760,6 +813,80 @@
       saveSettings();
     });
   });
+
+  // ====== КЛАВИАТУРА 88 КЛАВИШ (A0 = MIDI 21 ... C8 = MIDI 108) ======
+  // Подсвечиваются только клавиши, зажатые прямо сейчас (отпустил — погасла).
+  // Размеры клавиш — в единицах рисунка, как в круге квинт; на экране клавиатура
+  // растягивается на всю ширину, пропорции сохраняются.
+  const KB_FIRST = 21, KB_LAST = 108;
+  const KB_WHITE_W = 32, KB_WHITE_H = 108;
+  const KB_BLACK_W = KB_WHITE_W * 0.6, KB_BLACK_H = KB_WHITE_H * 0.62;
+  const KB_IS_BLACK = [false,true,false,true,false,false,true,false,true,false,true,false];
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const pianoSvg = document.getElementById('pianoKeyboardSvg');
+  const kbKeys = {};               // midi -> { rect, label, black }
+  const kbPressed = new Set();     // ноты, зажатые прямо сейчас
+
+  function buildKeyboard() {
+    const whites = [], blacks = [];
+    let wi = 0;
+    for (let m = KB_FIRST; m <= KB_LAST; m++) {
+      if (KB_IS_BLACK[m % 12]) {
+        blacks.push({ m, x: wi * KB_WHITE_W - KB_BLACK_W / 2 });
+      } else {
+        whites.push({ m, x: wi * KB_WHITE_W });
+        wi++;
+      }
+    }
+    const width = wi * KB_WHITE_W;
+    pianoSvg.setAttribute('viewBox', `0 0 ${width} ${KB_WHITE_H}`);
+    const draw = (k, black) => {
+      const rect = document.createElementNS(SVG_NS, 'rect');
+      rect.setAttribute('x', k.x);
+      rect.setAttribute('y', 0);
+      rect.setAttribute('width', black ? KB_BLACK_W : KB_WHITE_W);
+      rect.setAttribute('height', black ? KB_BLACK_H : KB_WHITE_H);
+      rect.setAttribute('class', black ? 'kbBlack' : 'kbWhite');
+      pianoSvg.appendChild(rect);
+      kbKeys[k.m] = { rect, black, x: k.x };
+    };
+    const drawLabel = (k, black) => {
+      const label = document.createElementNS(SVG_NS, 'text');
+      label.setAttribute('x', k.x + (black ? KB_BLACK_W : KB_WHITE_W) / 2);
+      label.setAttribute('y', black ? KB_BLACK_H - 10 : KB_WHITE_H - 14);
+      label.setAttribute('class', 'kbLabel ' + (black ? 'onBlack' : 'onWhite'));
+      pianoSvg.appendChild(label);
+      kbKeys[k.m].label = label;
+    };
+    // порядок рисования: белые клавиши -> их буквы -> чёрные клавиши -> их буквы
+    whites.forEach(k => draw(k, false));
+    whites.forEach(k => drawLabel(k, false));
+    blacks.forEach(k => draw(k, true));
+    blacks.forEach(k => drawLabel(k, true));
+  }
+
+  function updateKeyboard() {
+    const names = noteNames();
+    for (let m = KB_FIRST; m <= KB_LAST; m++) {
+      const k = kbKeys[m];
+      const on = kbPressed.has(m);
+      k.rect.classList.toggle('pressed', on);
+      k.label.textContent = on ? names[m % 12] : '';
+    }
+  }
+
+  let showKeyboard = false;
+  const showKeyboardCheckbox = document.getElementById('showKeyboardCheckbox');
+  function applyShowKeyboard() {
+    document.body.classList.toggle('kb-shown', showKeyboard);
+  }
+  showKeyboardCheckbox.addEventListener('change', () => {
+    showKeyboard = showKeyboardCheckbox.checked;
+    applyShowKeyboard();
+    saveSettings();
+  });
+  buildKeyboard();
+  // ==================================================
 
   const PLACEHOLDER_TEXT = 'нажмите ноту на клавиатуре';
   let hasPlayedNote = false;
@@ -975,6 +1102,7 @@
   }
 
   function updateDisplay() {
+    updateKeyboard();
     const info = detectChordInfo(heldNotes);
     chordDisplay.textContent = info.text;
     updateInversionDisplay(info);
@@ -1011,6 +1139,9 @@
     }
 
     if (status === 0x90 && velocity > 0) {
+      // клавиатура 88 клавиш — подсветка зажатой клавиши
+      kbPressed.add(note);
+      updateKeyboard();
       hasPlayedNote = true;
       if (pendingOff.has(note)) {
         clearTimeout(pendingOff.get(note));
@@ -1037,6 +1168,9 @@
         captureWindowTimer = null;
       }, CHORD_CAPTURE_WINDOW_MS);
     } else if (status === 0x80 || (status === 0x90 && velocity === 0)) {
+      // клавиатура 88 клавиш — отпущенная клавиша гаснет
+      kbPressed.delete(note);
+      updateKeyboard();
       // Отпускания клавиш больше не учитываются: нота остаётся в heldNotes
       // и в отображении до тех пор, пока не будет нажата новая.
       return;
@@ -1053,7 +1187,35 @@
     });
   }
 
+  // ====== Запоминание выбранных MIDI-входа и выхода (как в круге квинт) ======
+  // Сохраняются id и имя устройства; после перезагрузки ищем сначала по id, потом по имени.
+  // Сигналы по-прежнему принимаются со ВСЕХ входов — запоминается только выбор в списке.
+  const MIDI_INPUT_KEY = 'midiChordDisplay_midiInput_v1';
+  const MIDI_OUTPUT_KEY = 'midiChordDisplay_midiOutput_v1';
+
+  function loadSavedPort(key) {
+    try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; }
+  }
+  function savePort(key, port) {
+    try { if (port) localStorage.setItem(key, JSON.stringify({ id: port.id, name: port.name })); } catch (e) {}
+  }
+  function findSavedPortId(saved, ports) {
+    if (!saved) return null;
+    const byId = ports.find(p => p.id === saved.id);
+    if (byId) return byId.id;
+    const byName = ports.find(p => p.name === saved.name);
+    return byName ? byName.id : null;
+  }
+
+  inputSelect.addEventListener('change', () => {
+    if (!midiAccess) return;
+    savePort(MIDI_INPUT_KEY, [...midiAccess.inputs.values()].find(i => i.id === inputSelect.value));
+  });
+
   function populateSelects() {
+    // текущий выбор (если он уже был) — чтобы при подключении/отключении устройств он не сбрасывался
+    const prevInputId = inputSelect.value;
+    const prevOutputId = outputSelect.value;
     inputSelect.innerHTML = '';
     outputSelect.innerHTML = '';
 
@@ -1071,7 +1233,10 @@
         opt.textContent = inp.name + (inp.state !== 'connected' ? ' (не подключено)' : '');
         inputSelect.appendChild(opt);
       });
-      statusLine.textContent = `Входы: ${inputs.map(i => i.name).join(', ')}`;
+      const wantedInput = (inputs.some(i => i.id === prevInputId) ? prevInputId : null)
+        || findSavedPortId(loadSavedPort(MIDI_INPUT_KEY), inputs);
+      if (wantedInput) inputSelect.value = wantedInput;
+      statusLine.textContent = ''; // список портов под MIDI выходом не показываем
       statusLine.style.color = '#e6e6e6';
     }
 
@@ -1091,7 +1256,9 @@
 
     // Выход выбираем один — тот, что отмечен в списке (или первый по умолчанию)
     if (outputs.length > 0) {
-      const wanted = outputSelect.value || outputs[0].id;
+      const wanted = (outputs.some(o => o.id === prevOutputId) ? prevOutputId : null)
+        || findSavedPortId(loadSavedPort(MIDI_OUTPUT_KEY), outputs)
+        || outputs[0].id;
       selectOutput(wanted);
     }
   }
@@ -1103,7 +1270,10 @@
     }
   }
 
-  outputSelect.addEventListener('change', () => selectOutput(outputSelect.value));
+  outputSelect.addEventListener('change', () => {
+    selectOutput(outputSelect.value);
+    savePort(MIDI_OUTPUT_KEY, currentOutput);
+  });
 
   function requestAccess() {
     if (!navigator.requestMIDIAccess) {
@@ -1202,6 +1372,7 @@
         showInversions,
         showDegrees,
         showPoly,
+        showKeyboard,
         selectedTonic,
         selectedMode,
         zoom,
@@ -1227,6 +1398,7 @@
       if (typeof data.showInversions === 'boolean') showInversions = data.showInversions;
       if (typeof data.showDegrees === 'boolean') showDegrees = data.showDegrees;
       if (typeof data.showPoly === 'boolean') showPoly = data.showPoly;
+      if (typeof data.showKeyboard === 'boolean') showKeyboard = data.showKeyboard;
       if (typeof data.selectedTonic === 'string' || data.selectedTonic === null) selectedTonic = data.selectedTonic;
       if (typeof data.selectedMode === 'string' || data.selectedMode === null) selectedMode = data.selectedMode;
       if (typeof data.zoom === 'number') zoom = data.zoom;
@@ -1237,6 +1409,41 @@
     }
   }
   // ==============================================================================
+
+  // ====== F11 (полный экран): аккорд, обращение, ступень и полиаккорд не сдвигаются ======
+  // В обычном окне запоминаем, где на мониторе начинается страница (под панелью браузера)
+  // и какой она высоты. В полном экране ставим строки по этим запомненным значениям —
+  // так они остаются на том же месте монитора, что и в окне.
+  const WINDOWED_VIEW_KEY = 'midiChordDisplay_windowedView_v1';
+  function isBrowserFullscreen() {
+    return Math.abs(window.innerHeight - screen.height) <= 1 && Math.abs(window.innerWidth - screen.width) <= 1;
+  }
+  function updateViewVars() {
+    const root = document.documentElement.style;
+    if (!isBrowserFullscreen()) {
+      // рамка окна (на Windows у развёрнутого окна есть невидимые края по 8px) — вычитаем
+      const border = Math.max(0, (window.outerWidth - window.innerWidth) / 2);
+      const top = Math.max(0, window.screenY + (window.outerHeight - window.innerHeight) - border);
+      try { localStorage.setItem(WINDOWED_VIEW_KEY, JSON.stringify({ top, h: window.innerHeight })); } catch (e) {}
+      root.setProperty('--view-top', '0px');
+      root.setProperty('--view-h', '100vh');
+      return;
+    }
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(WINDOWED_VIEW_KEY) || 'null'); } catch (e) {}
+    if (saved && saved.h > 0) {
+      root.setProperty('--view-top', saved.top + 'px');
+      root.setProperty('--view-h', saved.h + 'px');
+    } else {
+      // страницу открыли сразу в полном экране — запомненного окна ещё нет
+      root.setProperty('--view-top', '0px');
+      root.setProperty('--view-h', '100vh');
+    }
+  }
+  window.addEventListener('resize', updateViewVars);
+  setInterval(updateViewVars, 1000); // если окно просто передвинули (без изменения размера)
+  updateViewVars();
+  // ==========================================================================================
 
   chordDisplay.textContent = PLACEHOLDER_TEXT;
 
@@ -1250,6 +1457,8 @@
   showInversionCheckbox.checked = showInversions;
   showDegreeCheckbox.checked = showDegrees;
   showPolyCheckbox.checked = showPoly;
+  showKeyboardCheckbox.checked = showKeyboard;
+  applyShowKeyboard();
   updateDisplay();
 
 })();
